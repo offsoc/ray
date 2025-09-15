@@ -106,6 +106,7 @@ ray_cc_library(
         "ray_event_recorder.h",
     ],
     deps = [
+        ":metric_interface",
         ":ray_event",
         ":ray_event_recorder_interface",
         "//src/ray/common:asio",
@@ -114,6 +115,7 @@ ray_cc_library(
         "//src/ray/rpc:event_aggregator_client",
         "//src/ray/util:logging",
         "@com_google_absl//absl/time",
+         "@boost//:circular_buffer",
     ],
 )
 
@@ -124,4 +126,17 @@ ray_cc_library(
         ":ray_event_interface",
         ":ray_event_recorder_interface",
     ],
+)
+
+ray_cc_library(
+    name = "metrics",
+    hdrs = ["metrics.h"],
+    deps = [
+        "//src/ray/stats:stats_lib",
+    ],
+)
+
+ray_cc_library(
+    name = "metric_constants",
+    hdrs = ["metric_constants.h"],
 )
