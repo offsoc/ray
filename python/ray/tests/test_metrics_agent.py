@@ -670,9 +670,7 @@ def test_histogram(_setup_cluster_for_test):
         assert prometheus_metric_name in metric_names
         assert metric_descriptors[prometheus_metric_name].type == "histogram"
 
-        test_histogram_samples = [
-            m for m in metric_samples if metric_name in m.name
-        ]
+        test_histogram_samples = [m for m in metric_samples if metric_name in m.name]
         buckets = {
             m.labels["le"]: m.value
             for m in test_histogram_samples
