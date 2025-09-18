@@ -93,18 +93,23 @@ Metric::Metric(const std::string &name,
       measure_(nullptr),
       name_regex_(GetMetricNameRegex()) {
   RAY_CHECK_WITH_DISPLAY(
-      std::regex_match(name, Metric::name_regex_),
-      "Invalid metric name: " + name +
-          ". Metric names can only contain letters, numbers, _, and :. "
+      std::regex_match(name_, Metric::name_regex_),
+      "Invalid metric name: " + name_ +
+          ". Metric names can only contain letters, numbers, _, ., and :. "
           "Metric names cannot start with numbers. Metric name cannot be "
           "empty.");
+  if (::RayConfig::instance().enable_open_telemetry()) {
+    // OpenTelemetry does not support ":" in metric names, so we replace it with "."
+    // (https://github.com/open-telemetry/opentelemetry-cpp/blob/main/sdk/src/metrics/instrument_metadata_validator.cc#L22-L23)
+    name_ = std::regex_replace(name_, std::regex(":"), ".");
+  }
   for (const auto &key : tag_keys) {
     tag_keys_.push_back(opencensus::tags::TagKey::Register(key));
   }
 }
 
 const std::regex &Metric::GetMetricNameRegex() {
-  const static std::regex name_regex("^[a-zA-Z_:][a-zA-Z0-9_:]*$");
+  const static std::regex name_regex("^[a-zA-Z_:.][a-zA-Z0-9_:.]*$");
   return name_regex;
 }
 

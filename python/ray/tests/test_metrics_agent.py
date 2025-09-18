@@ -236,7 +236,7 @@ def _setup_cluster_for_test(request, ray_start_cluster):
     class A:
         async def ping(self):
             histogram = Histogram(
-                "test_histogram", description="desc", boundaries=[0.1, 1.6]
+                "test:histogram.metric", description="desc", boundaries=[0.1, 1.6]
             )
             histogram = ray.get(ray.put(histogram))  # Test serialization.
             histogram.observe(1.5, tags=extra_tags)
@@ -661,12 +661,17 @@ def test_histogram(_setup_cluster_for_test):
             prom_addresses
         )
         metric_names = metric_descriptors.keys()
-        custom_histogram_metric_name = "ray_test_histogram_bucket"
-        assert custom_histogram_metric_name in metric_names
-        assert metric_descriptors[custom_histogram_metric_name].type == "histogram"
+        if os.environ.get("RAY_enable_open_telemetry") != "1":
+            metric_name = "test:histogram.metric"
+            prometheus_metric_name = "ray_test:histogram.metric_bucket"
+        else:
+            metric_name = "test.histogram.metric"
+            prometheus_metric_name = "ray_test.histogram.metric_bucket"
+        assert prometheus_metric_name in metric_names
+        assert metric_descriptors[prometheus_metric_name].type == "histogram"
 
         test_histogram_samples = [
-            m for m in metric_samples if "test_histogram" in m.name
+            m for m in metric_samples if metric_name in m.name
         ]
         buckets = {
             m.labels["le"]: m.value
